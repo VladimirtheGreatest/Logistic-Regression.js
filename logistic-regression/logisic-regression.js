@@ -53,31 +53,17 @@ class LogisticRegression {
       this.updateLearningRate();
     }
   }
-  
-  test(testFeatures,testLabels){
-    testFeatures = this.processFeatures(testFeatures);
+
+  test(testFeatures, testLabels) {
+    const predictions = this.predict(testFeatures).round(); //probabilities of being the '1' label, // round function anything above 50 will be 1 anything below will be 0
     testLabels = tf.tensor(testLabels);
-
-    const predictions = testFeatures.matMul(this.weights);
-
-    //coefficient of determination  R2 = 1 - total sum of squares / sum of squares of residuals  check notes, aka gauging accuracy of our prediction
-
-    //sum of squares of residuals
-    const res = testLabels.sub(predictions)
-    .pow(2)
-    .sum() // we dont have to provide axis for this
-    .get()
-    //total sum of squares
-    const tot = testLabels
-    .sub(testLabels.mean())
-    .pow(2)
-    .sum()
-    .get();
-
-    return 1 - res / tot;
+    //getting rid of -1(absolute values so we know how many times we failed to predict)
+    const incorrect = predictions.sub(testLabels).abs().sum().get();
+                                                //number of predictions shape[0] a.k.a row
+    return (predictions.shape[0] - incorrect) / predictions.shape[0];
   }
 
-  predict(observations){
+  predict(observations) {
     return this.processFeatures(observations).matMul(this.weights).sigmoid();
   }
 
