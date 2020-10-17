@@ -9,7 +9,7 @@ class LogisticRegression {
 
     //if we dont provide learning rate in options the default rate will be 0.1
     this.options = Object.assign(
-      { learningRate: 0.1, iterations: 1000 },
+      { learningRate: 0.1, iterations: 1000, decisionBoundary: 0.5 },
       options
     );
 
@@ -55,16 +55,20 @@ class LogisticRegression {
   }
 
   test(testFeatures, testLabels) {
-    const predictions = this.predict(testFeatures).round(); //probabilities of being the '1' label, // round function anything above 50 will be 1 anything below will be 0
+    const predictions = this.predict(testFeatures); //probabilities of being the '1' label, // round function anything above 50 will be 1 anything below will be 0
     testLabels = tf.tensor(testLabels);
     //getting rid of -1(absolute values so we know how many times we failed to predict)
     const incorrect = predictions.sub(testLabels).abs().sum().get();
-                                                //number of predictions shape[0] a.k.a row
+    //number of predictions shape[0] a.k.a row
     return (predictions.shape[0] - incorrect) / predictions.shape[0];
   }
 
   predict(observations) {
-    return this.processFeatures(observations).matMul(this.weights).sigmoid();
+    return this.processFeatures(observations)
+      .matMul(this.weights)
+      .sigmoid()
+      .greater(this.options.decisionBoundary)
+      .cast('float32');  //round replaxced, returns boolean if less than argument 0 else 1
   }
 
   processFeatures(features) {
