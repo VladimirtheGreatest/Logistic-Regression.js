@@ -5,7 +5,7 @@ class LogisticRegression {
   constructor(features, labels, options) {
     this.features = this.processFeatures(features);
     this.labels = tf.tensor(labels);
-    this.mseHistory = [];
+    this.costHistory = [];
 
     //if we dont provide learning rate in options the default rate will be 0.1
     this.options = Object.assign(
@@ -49,7 +49,7 @@ class LogisticRegression {
 
         this.gradientDescent(featureSlice, labelSlice);
       }
-      this.recordMSE();
+      this.recordCost();
       this.updateLearningRate();
     }
   }
@@ -98,25 +98,36 @@ class LogisticRegression {
     return features.sub(mean).div(variance.pow(0.5));
   }
   //vectorized solution
-  recordMSE() {
-    const mse = this.features
-      .matMul(this.weights)
-      .sub(this.labels)
-      .pow(2)
-      .sum()
-      .div(this.features.shape[0]) //number of observations
-      .get();
+  recordCost() {
+    //vectorized cost entropy formula instead of mean squaared error
+    const guesses = this.features.
+    matMul(this.weights)
+    .sigmoid();
 
-    //put the most recet mse in the beginning of the array
-    this.mseHistory.unshift(mse);
+    const termOne = this.labels
+    .transpose()
+    .matMul(guesses.log());
+
+    const termTwo = this.labels
+    .mul(-1)
+    .add(1)
+    .transpose()
+    .matMul(guesses.mul(-1).add(1).log())
+
+    const cost = termOne.add(termTwo)
+    .div(this.features.shape[0])
+    .mul(-1)
+    .get(0, 0);
+
+    this.costHistory.unshift(cost);
   }
 
   updateLearningRate() {
-    if (this.mseHistory.length < 2) {
+    if (this.costHistory.length < 2) {
       return;
     }
     //if the value of mse goes up we are overshooting and getting incorrect values we need to decrease our learning rate
-    if (this.mseHistory[0] > this.mseHistory[1]) {
+    if (this.costHistory[0] > this.costHistory[1]) {
       this.options.learningRate = this.options.learningRate / 2;
     } else {
       this.options.learningRate *= 1.05; //increase the learning by 5% if the MSE error goes down and we are getting closer to the optimal value
