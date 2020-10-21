@@ -55,10 +55,9 @@ class LogisticRegression {
   }
 
   test(testFeatures, testLabels) {
-    const predictions = this.predict(testFeatures); //probabilities of being the '1' label, // round function anything above 50 will be 1 anything below will be 0
-    testLabels = tf.tensor(testLabels);
-    //getting rid of -1(absolute values so we know how many times we failed to predict)
-    const incorrect = predictions.sub(testLabels).abs().sum().get();
+    const predictions = this.predict(testFeatures); //probabilities of being the '1' label, 
+    testLabels = tf.tensor(testLabels).argMax(1);
+    const incorrect = predictions.notEqual(testLabels).sum().get();
     //number of predictions shape[0] a.k.a row
     return (predictions.shape[0] - incorrect) / predictions.shape[0];
   }
@@ -67,8 +66,7 @@ class LogisticRegression {
     return this.processFeatures(observations)
       .matMul(this.weights)
       .softmax()
-      .greater(this.options.decisionBoundary)
-      .cast('float32');  //round replaxced, returns boolean if less than argument 0 else 1
+      .argMax(1); //horizontal axis
   }
 
   processFeatures(features) {

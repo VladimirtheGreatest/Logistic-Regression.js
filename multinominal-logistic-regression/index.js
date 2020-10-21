@@ -12,6 +12,7 @@ let { features, labels, testFeatures, testLabels } = loadCSV(
     splitTest: 50,
     dataColumns: ["horsepower", "displacement", "weight"],
     labelColumns: ["mpg"],
+    //converter function helps us to convert values from mpg to array [1, 0, 0] we need to flatten the array later to get rid of extra nesting
     converters: {
       mpg: value => {
         const mpg = parseFloat(value);
@@ -33,12 +34,9 @@ let { features, labels, testFeatures, testLabels } = loadCSV(
 const regression = new LogisticRegression(features, _.flatMap(labels), {
     learningRate: 0.5,
     iterations: 100,
-    batchSize: 50,
-    decisionBoundary: 0.5
+    batchSize: 10
 });
 
  regression.train();
 
- regression.predict([
-  [150, 200, 2.28]
- ]).print();
+console.log(regression.test(testFeatures, _.flatMap(testLabels)));
